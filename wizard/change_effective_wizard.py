@@ -356,27 +356,31 @@ class ChangeEffectiveWizard(models.TransientModel):
                 do_update(query.update_inventory_valuation_date_desc, self.effective_date, valuation_product_name)
 
                 # Update account_move date & ref
-                produced_product_entry = self.env['account.move'].search([('ref', '=', valuation_product_name)])
-                if produced_product_entry:
-                    do_update(query.update_journal_entry_date, self.effective_date, produced_product_entry.ref)
-                    do_update(query.update_journal_entry_line, self.effective_date, produced_product_entry.ref)
+                produced_product_entry = self.env['account.move'].search([('ref', 'ilike', picking_document_name)])
+                for rec in produced_product_entry:
+                    do_update(query.update_journal_entry_date, self.effective_date, rec.ref)
+                    do_update(query.update_journal_entry_line, self.effective_date, rec.ref)
+                    do_update(query.update_inventory_valuation_date, self.effective_date, rec.id)
                     if old_date_year != self.effective_date.year or old_date_month != self.effective_date.month:
                         product_journal_sequence = update_manufacturing_products_entry(self, self.effective_date.year
                                                                                        , self.effective_date.month
-                                                                                       , valuation_product_name
+                                                                                       , rec.ref
                                                                                        , product_journal_sequence)
-                for products in picking.move_raw_ids:
-                    product = products.product_id.name
-                    valuation_name = picking_document_name + " - " + product
-                    do_update(query.update_inventory_valuation_date_desc, self.effective_date, valuation_name)
 
-                    # Update account_move date & ref
-                    material_used_entry = self.env['account.move'].search([('ref', '=', valuation_name)])
-                    if material_used_entry:
-                        do_update(query.update_journal_entry_date, self.effective_date, material_used_entry.ref)
-                        do_update(query.update_journal_entry_line, self.effective_date, material_used_entry.ref)
-                    if old_date_year != self.effective_date.year or old_date_month != self.effective_date.month:
-                        product_journal_sequence = update_manufacturing_products_entry(self, self.effective_date.year
-                                                                                       , self.effective_date.month
-                                                                                       , valuation_name
-                                                                                       , product_journal_sequence)
+                for products in picking.move_raw_ids:
+                    # product = products.product_id.name
+                    # valuation_name = picking_document_name + " - " + product
+                    check_inventory = self.env['stock.valuation.layer'].search([('description', 'ilike', picking_document_name)])
+                    for rec in check_inventory:
+                        do_update(query.update_inventory_valuation_date_desc, self.effective_date, rec.description)
+                #
+                #     # Update account_move date & ref
+                #     material_used_entry = self.env['account.move'].search([('ref', 'ilike', picking_document_name)])
+                #     for rec in material_used_entry:
+                #         do_update(query.update_journal_entry_date, self.effective_date, rec.ref)
+                #         do_update(query.update_journal_entry_line, self.effective_date, rec.ref)
+                #     if old_date_year != self.effective_date.year or old_date_month != self.effective_date.month:
+                #         product_journal_sequence = update_manufacturing_products_entry(self, self.effective_date.year
+                #                                                                        , self.effective_date.month
+                #                                                                        , valuation_name
+                #                                                                        , product_journal_sequence)
