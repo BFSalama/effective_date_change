@@ -3,7 +3,7 @@
 {
     'name': 'Change Effective Date',
     'author': 'Altela Softwares',
-    'version': '15.0.0.5.0',
+    'version': '15.0.0.8.0',
     'summary': 'Change Effective Date in Stock Picking',
     'license': 'OPL-1',
     'sequence': 1,

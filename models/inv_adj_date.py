@@ -8,7 +8,6 @@ class InventoryAdjustmentDate(models.Model):
     _inherit = 'stock.quant'
 
     def _apply_inventory(self):
-        res = super(StockQuant, self)
         move_vals = []
         inventories = self.env['stock.quant']
         main_date = self.accounting_date
@@ -49,11 +48,13 @@ class InventoryAdjustmentDate(models.Model):
         self.write({'inventory_quantity': 0, 'user_id': False})
         self.write({'inventory_diff_quantity': 0})
         self.write({'accounting_date': 0})
-        return res
 
 
 class InheritApplyToAll(models.TransientModel):
     _inherit = "stock.inventory.adjustment.name"
 
     def action_apply(self):
-        raise UserError(_('Change Effective Date is installed and can\'t handle applying to multiple records'))
+        if len(self.quant_ids.ids) > 1:
+            raise UserError(_('Change Effective Date is installed and can\'t handle applying to multiple records'))
+        elif len(self.quant_ids.ids) != 0:
+            InventoryAdjustmentDate._apply_inventory(self.quant_ids)
